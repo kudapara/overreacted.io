@@ -31,7 +31,7 @@ La notation Big-O décrit le ralentissement d’un algorithme proportionnellemen
 
 Par exemple, observez le code ci-dessous qui met manuellement à jour le DOM au fil du temps avec des opérations impératives telles que `node.appendChild()` et `node.removeChild()`, et n’a pas de structure claire :
 
-```js
+```jsx
 function trySubmit() {
   // Section 1
   let spinner = createSpinner();
@@ -64,13 +64,13 @@ Le problème avec ce code, ce n’est pas qu’il est « moche ».  On ne parl
 
 Cette fonction a 4 sections différentes et aucune garantie sur leur ordonnancement.  Mes calculs hautement non-scientifiques me disent qu’on obtient 4×3×2×1 = 24 ordres différents d’exécution possible.  Si j’ajoute encore quatre segments supplémentaires, ce sera 8×7×6×5×4×3×2×1 — *quarante mille* combinaisons.  Bon courage pour déboguer ça.
 
-**En d’autres termes, la Bug-O de cette approche est 🐞(<i>n!</i>)** où *n* est le nombre de segments de code qui touchent au DOM. Ouais, c’est une *factorielle*.  Bien sûr, je ne suis pas très scientifique, sur ce coup.  Toutes les transitions ne sont pas possibles en pratique.  Mais d’un autre côté, chacun de ces segments peut tourner plus d’une fois. <span style="word-break: keep-all">🐞(*¯\\_(ツ)_/¯*)</span> serait peut-être une description plus exacte, mais ça craint quand même.  On peut mieux faire.
+**En d’autres termes, la Bug-O de cette approche est 🐞(<i>n!</i>)** où *n* est le nombre de segments de code qui touchent au DOM. Ouais, c’est une *factorielle*.  Bien sûr, je ne suis pas très scientifique, sur ce coup.  Toutes les transitions ne sont pas possibles en pratique.  Mais d’un autre côté, chacun de ces segments peut tourner plus d’une fois. <span style="word-break: keep-all">🐞(*¯\\\_(ツ)\_/¯*)</span> serait peut-être une description plus exacte, mais ça craint quand même.  On peut mieux faire.
 
 ---
 
 Pour améliorer la Bug-O de ce code, on peut limiter le nombre d’états et de résultats possibles.  Pas besoin d’une bibliothèque pour ça : c’est juste une question de meilleure structuration de notre code.  Voici une manière possible d’y arriver :
 
-```js
+```jsx
 let currentState = {
   step: 'initial', // 'initial' | 'pending' | 'success' | 'error'
 };
@@ -81,7 +81,7 @@ function trySubmit() {
     return;
   }
   setState({ step: 'pending' });
-  submitForm.then(() => {
+  submitForm().then(() => {
     setState({ step: 'success' });
   }).catch(error => {
     setState({ step: 'error', error });
@@ -116,7 +116,7 @@ function setState(nextState) {
 
 Ce code n’a pas l’air très différent.  Il est même un poil plus verbeux.  Mais il est *dramatiquement* plus simple à déboguer, principalement grâce à cette ligne :
 
-```js{3}
+```jsx{3}
 function setState(nextState) {
   // On efface d’abord tous les nœuds fils existants
   formStatus.innerHTML = '';
@@ -130,7 +130,7 @@ En effaçant l’état du formulaire avant de faire quoi que ce soit d’autre, 
 
 On a toujours un petit risque de soucis de concurrence dans la *définition* de l’état, mais déboguer ce type de problèmes est plus facile parce que chaque état intermédiaire peut être logué et examiné.  On peut interdire les transitions indésirables explicitement :
 
-```js
+```jsx
 function trySubmit() {
   if (currentState.step === 'pending') {
     // On empêche le double envoi
@@ -142,7 +142,7 @@ Bien sûr, réinitialiser le DOM à chaque fois n’est pas sans inconvénient. 
 
 C’est pourquoi des bibliothèques comme React peuvent être utiles.  Elles vous permettent de *réfléchir* en conservant le paradigme de la re-création de l'UI à partir de zéro, sans forcément tout effacer sous le capot :
 
-```js
+```jsx
 function FormStatus() {
   let [state, setState] = useState({
     step: 'initial'
@@ -155,7 +155,7 @@ function FormStatus() {
       return;
     }
     setState({ step: 'pending' });
-    submitForm.then(() => {
+    submitForm().then(() => {
       setState({ step: 'success' });
     }).catch(error => {
       setState({ step: 'error', error });
